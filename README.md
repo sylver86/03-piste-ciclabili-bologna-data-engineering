@@ -1,114 +1,137 @@
-# Bike Lanes Bologna — Geospatial Data Engineering Pipeline
+# Bologna CycleMap — Pipeline di Data Engineering Geospaziale
 
 ![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
-![GeoPandas](https://img.shields.io/badge/GeoPandas-0.14+-119DFF?logo=python&logoColor=white)
-![Parquet](https://img.shields.io/badge/Format-Parquet-50ABF1?logo=apacheparquet&logoColor=white)
-![OpenData](https://img.shields.io/badge/Data-Open%20Data%20Bologna-brightgreen)
+![GeoPandas](https://img.shields.io/badge/GeoPandas-Geospatial-green)
+![Parquet](https://img.shields.io/badge/Storage-Parquet-orange)
+![Medallion](https://img.shields.io/badge/Architecture-Medallion-blue)
 
-## Overview
+## Panoramica
 
-End-to-end **geospatial data engineering pipeline** built on open municipal data from the City of Bologna.
-The pipeline ingests GeoJSON data representing the city's cycle and pedestrian lane network, converts it to Parquet for efficient columnar storage, applies structured cleaning and standardisation, and produces a production-ready dataset for spatial analytics or downstream BI tools.
+Pipeline di Data Engineering per l'ingestione, validazione e trasformazione di dati geospaziali open source relativi alla rete ciclabile del Comune di Bologna. Il progetto implementa un'architettura Medallion (Raw → Processed) con storage Parquet, dimostrando la gestione end-to-end di dataset territoriali strutturati con GeoPandas.
 
-This project demonstrates core data engineering practices — **modularity**, **structured logging**, **error handling**, and **layered storage** (raw → processed) — applied to real-world geospatial data.
+Competenze applicabili in contesti di smart city, gestione infrastrutture fisiche, mobilità sostenibile e integrazione di dataset open geospaziali in piattaforme dati enterprise.
 
-> Relevant to infrastructure and smart-city data use cases: energy grids, mobility networks, urban planning.
+## Valore Enterprise
 
----
+| Settore / Azienda | Rilevanza |
+|-------------------|-----------|
+| Utilities & Infrastrutture (Enel, Terna) | Pipeline per dati territoriali e infrastrutturali geospaziali |
+| Smart City / PA | ETL per dataset open comunali e regionali |
+| IT Consulting (NTT Data, Accenture) | Data Engineering geospaziale con stack Python moderno |
+| Data Reply | Medallion Architecture su dati reali open source |
 
-## Pipeline Architecture
+## Architettura Pipeline
 
 ```
-Open Data Bologna (GeoJSON)
+GeoJSON (Comune di Bologna — Open Data)
         │
         ▼
-  [ ingest_data.py ]
-  • Load GeoJSON into GeoDataFrame
-  • Validate: shape, nulls, column count
-  • Serialize to raw Parquet
+ingest_data.py          ← validazione schema, caricamento GeoPandas, export Parquet
         │
         ▼
-  data/raw/piste-ciclopedonali.parquet
+data/raw/               ← Bronze Layer (Parquet grezzo)
         │
         ▼
-  [ clean_data.py ]
-  • Drop redundant columns (geo_point_2d, duso, length)
-  • Merge typology fields into single 'type' column
-  • Rename columns to English snake_case standard
-  • Null removal on critical fields (type, year_of_data)
-  • Year standardisation → integer format
-  • String normalisation: lowercase, strip, special chars removal
+clean_data.py           ← drop colonne, snake_case, rimozione null, normalizzazione stringhe
         │
         ▼
-  data/processed/piste-ciclopedonali_cleaned.parquet
+data/processed/         ← Silver Layer (Parquet pulito)
 ```
-
----
 
 ## Dataset
 
-**Source:** [Open Data Comune di Bologna](https://opendata.comune.bologna.it) — Piste Ciclopedonali
-**Format:** GeoJSON (geometry: LineString, CRS: WGS84)
-**Coverage:** Full municipal network of cycle and pedestrian lanes
+| Campo | Tipo | Descrizione |
+|-------|------|-------------|
+| `geometry` | LineString | Tracciato geospaziale del percorso |
+| `lunghezza` | float | Lunghezza segmento (metri) |
+| `tipo_pista` | string | Tipologia infrastruttura ciclabile |
+| `comune` | string | Comune di appartenenza |
+| `anno_realizzazione` | int | Anno di realizzazione |
 
-**Final schema after cleaning:**
+## Highlights Tecnici
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `code` | string | Lane unique identifier |
-| `year_of_data` | int | Reference year |
-| `type` | string | Lane typology (e.g. "pista ciclabile - sede propria") |
-| `zone_name` | string | Municipal zone |
-| `neighborhood_name` | string | Neighbourhood name |
-| `length_meters` | float | Lane length in metres |
-| `geometry` | geometry | LineString spatial geometry |
+- `ingest_data.py`: caricamento GeoJSON con GeoPandas, validazione schema, export Parquet tipizzato
+- `clean_data.py`: drop colonne superflue, rinomina snake_case, rimozione null, normalizzazione stringhe
+- Storage Parquet: compressione efficiente, tipizzazione preservata, pronto per query analitiche
 
----
-
-## Project Structure
-
-```
-03-piste-ciclabili-bologna-data-engineering/
-├── src/
-│   ├── ingest_data.py       # GeoJSON ingestion & raw Parquet export
-│   └── clean_data.py        # Cleaning, standardisation & processed Parquet export
-├── data/
-│   ├── raw/                 # Raw Parquet (post-ingestion)
-│   └── processed/           # Cleaned Parquet (pipeline output)
-├── requirements.txt
-└── .gitignore
-```
-
----
-
-## Setup & Usage
+## Setup
 
 ```bash
 git clone https://github.com/sylver86/03-piste-ciclabili-bologna-data-engineering.git
 cd 03-piste-ciclabili-bologna-data-engineering
 pip install -r requirements.txt
 
-# Step 1 — Ingestion
-python src/ingest_data.py
-
-# Step 2 — Cleaning
-python src/clean_data.py
+python src/ingest_data.py    # GeoJSON → data/raw/
+python src/clean_data.py     # data/raw/ → data/processed/
 ```
 
-Logs are written to `logs/pipeline.log` with timestamped entries for each pipeline phase.
+## Struttura Repository
+
+```
+03-piste-ciclabili-bologna-data-engineering/
+├── src/
+│   ├── ingest_data.py
+│   └── clean_data.py
+├── data/
+│   ├── raw/
+│   └── processed/
+├── requirements.txt
+└── README.md
+```
+
+## Stack Tecnologico
+
+`Python 3.10+` · `GeoPandas` · `pandas` · `Parquet` · `Medallion Architecture`
 
 ---
 
-## Engineering Highlights
-
-- **Layered storage pattern** (raw → processed) following Medallion Architecture principles
-- **Structured logging** across all pipeline phases for full observability
-- **Robust error handling** with graceful exits and exception tracing at each stage
-- **GeoPandas** for native geospatial data management, preserving geometry through the entire pipeline
-- **Parquet** as columnar storage format — optimised for analytical workloads and downstream tools
-
 ---
+
+# Bologna CycleMap — Geospatial Data Engineering Pipeline 🇬🇧
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?logo=python&logoColor=white)
+![GeoPandas](https://img.shields.io/badge/GeoPandas-Geospatial-green)
+![Parquet](https://img.shields.io/badge/Storage-Parquet-orange)
+
+## Overview
+
+Data Engineering pipeline for ingesting, validating, and transforming open-source geospatial data on Bologna's cycling network. Implements a Medallion Architecture (Raw → Processed) with Parquet storage, demonstrating end-to-end handling of structured territorial datasets with GeoPandas.
+
+## Pipeline Architecture
+
+```
+GeoJSON (City of Bologna Open Data)
+        │
+        ▼
+ingest_data.py      ← schema validation, GeoPandas load, Parquet export
+        │
+        ▼
+data/raw/           ← Bronze Layer (raw Parquet)
+        │
+        ▼
+clean_data.py       ← column pruning, snake_case rename, null removal, string normalization
+        │
+        ▼
+data/processed/     ← Silver Layer (clean Parquet)
+```
+
+## Technical Highlights
+
+- `ingest_data.py`: GeoJSON load via GeoPandas, schema validation, typed Parquet export
+- `clean_data.py`: column pruning, snake_case normalization, null removal, string standardization
+- Parquet storage: efficient compression, type preservation, optimized for analytical queries
+
+## Setup
+
+```bash
+git clone https://github.com/sylver86/03-piste-ciclabili-bologna-data-engineering.git
+cd 03-piste-ciclabili-bologna-data-engineering
+pip install -r requirements.txt
+
+python src/ingest_data.py    # GeoJSON → data/raw/
+python src/clean_data.py     # data/raw/ → data/processed/
+```
 
 ## Technologies
 
-`Python 3.10+` · `GeoPandas` · `Pandas` · `Parquet` · `Logging` · `Regex`
+`Python 3.10+` · `GeoPandas` · `pandas` · `Parquet` · `Medallion Architecture`
